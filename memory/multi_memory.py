@@ -1,4 +1,6 @@
 import sqlite3
+import os
+import shutil
 
 class MultiMemory:
     def __init__(self):
@@ -61,3 +63,30 @@ class MultiMemory:
             for file_name in code_files:
                 code = self.get_code_memory(file_name)
                 print(f"File: {file_name}\nCode:\n{code}\n")
+
+    def set_project_structure(self, structure):
+        """Save the directory structure of the project."""
+        self.cursor.execute("""
+            INSERT OR REPLACE INTO code_memory (file_name, code)
+            VALUES ('project_structure', ?)
+        """, (structure,))
+        self.conn.commit()
+
+    def get_project_structure(self):
+        """Retrieve the directory structure of the project."""
+        self.cursor.execute("SELECT code FROM code_memory WHERE file_name = 'project_structure'")
+        result = self.cursor.fetchone()
+        return result[0] if result else None
+    
+    def export_project(self, project_name):
+        """Export the current project memory to a file."""
+        export_path = f"{project_name}_code_memory.db"
+        shutil.copyfile("memory/persistence/code_memory.db", export_path)
+        print(f"Project exported to {export_path}")
+
+    def clear_project(self):
+        """Clear all project data from memory."""
+        self.cursor.execute("DELETE FROM code_memory")  # Clear all rows
+        self.conn.commit()  # Ensure changes are committed to the database
+        self.cursor.execute("VACUUM")  # Reorganize the database to reclaim disk space
+        print("Code memory cleared for new project.")
