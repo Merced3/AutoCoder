@@ -43,3 +43,21 @@ class MultiMemory:
         """List all files stored in persistent memory."""
         self.cursor.execute("SELECT file_name FROM code_memory")
         return [row[0] for row in self.cursor.fetchall()]
+
+    def visualize_memory(self):
+        """Visualize the memory contents."""
+        print("\nTask Memory:")
+        if not self.task_memory:
+            print("No task memory available.")
+        else:
+            for task_id, data in self.task_memory.items():
+                print(f"Task ID: {task_id}, Data: {data}")
+        
+        print("\nCode Memory:")
+        code_files = self.list_code_files()
+        if not code_files:
+            print("No code memory available.")
+        else:
+            for file_name in code_files:
+                code = self.get_code_memory(file_name)
+                print(f"File: {file_name}\nCode:\n{code}\n")

@@ -19,5 +19,9 @@ greet(123)
     result = agent.debug_task("task_1", code_snippet)
     print(result)
 
+    # Visualize the memory contents
+    print("\nVisualizing Memory:")
+    memory.visualize_memory()
+    
 if __name__ == "__main__":
     main()

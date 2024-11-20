@@ -7,6 +7,9 @@ class DebuggerAgent(BaseAgent):
         # Add the task to short-term memory
         self.memory.add_task_memory(task_id, {"code": code_snippet, "status": "in progress"})
 
+        # Add the code snippet to persistent memory
+        self.memory.add_code_memory(f"task_{task_id}.py", code_snippet)
+
         # Run the code snippet
         result = self.run_code(code_snippet)
         if result["status"] == "error":
