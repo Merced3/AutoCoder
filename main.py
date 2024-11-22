@@ -18,6 +18,7 @@ def main():
 │   ├── __init__.py
 │   ├── base_agent.py
 │   ├── debugger_agent.py
+│   ├── coder_agent.py
 ├── memory/
 │   ├── multi_memory.py
 """

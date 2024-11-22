@@ -22,6 +22,10 @@ logs/
 *.log
 memory/persistence/code_memory.db
 
+# sensitive Files / Model Folders / 
+models/starcoder/
+cred.py
+
 # Test coverage reports
 htmlcov/
 

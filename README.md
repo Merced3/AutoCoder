@@ -36,7 +36,18 @@ Use the 'requirements.txt' file to install all required libraries:
 pip install -r requirements.txt
 ```
 
-### **4. Run the Program**
+### **4. Install LLM's**
+You'll need to download some LLm's that take a while to download, there large files.
+
+#### Edit '_cred.py' file in root of 'AutoCoder/'
+Read everything in that file, then once everything is filled out, rename the file too 'cred.py'
+
+#### Now run Coder agent so we can download the LLM it uses.
+```bash
+python agents/coder_agent.py
+```
+
+### **5. Run the Program**
 To run the main entry point for AutoCoder:
 ```bash
 python main.py
@@ -52,6 +63,9 @@ AutoCoder/
 │   ├── __init__.py         # Makes this a Python package
 │   ├── base_agent.py       # Base agent class (shared logic)
 │   ├── debugger_agent.py   # Debugger-specific implementation
+│   ├── coder_agent.py      # Code-specific implementation
+├── models/                 # Folder for LLM's
+│   ├── starcoder/          # Folder for StarCoder model files
 ├── memory/                 # Folder for memory system
 │   ├── __init__.py         # Makes this a Python package
 │   ├── multi_memory.py     # Multi-memory class implementation
