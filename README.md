@@ -43,6 +43,7 @@ You'll need to download some LLm's that take a while to download, there large fi
 Read everything in that file, then once everything is filled out, rename the file too 'cred.py'
 
 #### Now run Coder agent so we can download the LLM it uses.
+This will take a while to download.
 ```bash
 python agents/coder_agent.py
 ```
