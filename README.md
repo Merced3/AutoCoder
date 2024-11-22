@@ -86,6 +86,7 @@ AutoCoder/
 │   ├── test_memory.py      # Tests for the memory system
 │   ├── test_agents.py      # Tests for the agents
 │   ├── test_tools.py       # Tests for utility tools
+├── _cred.py                # Holds important information you need o fill out, then rename to 'cred.py'
 ├── requirements.txt        # Python dependencies
 ├── README.md               # Project description
 ```

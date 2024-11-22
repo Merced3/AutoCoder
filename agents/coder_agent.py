@@ -1,5 +1,10 @@
 import os
 from transformers import AutoModelForCausalLM, AutoTokenizer
+import sys
+
+# Add the root directory to the Python path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from cred import ACCESS_TOKEN
 
 class CoderAgent:
