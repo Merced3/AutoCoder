@@ -17,13 +17,23 @@ dist/
 build/
 *.egg-info
 
-# Logs and database files
+# Logs and database files / sensitive files / model folders / datasets
+
+# Ignore log files and log folder
 logs/
 *.log
+
+# Ignore database files
 memory/persistence/code_memory.db
 
-# sensitive Files / Model Folders / 
-models/starcoder/
+# Ignore all contents inside the models folder but keep the folder itself
+models/*
+!models/.gitkeep
+
+# Ignore all contents inside the datasets folder but keep the folder itself
+datasets/*
+!datasets/.gitkeep
+
 cred.py
 
 # Test coverage reports
