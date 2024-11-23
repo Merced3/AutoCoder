@@ -59,36 +59,72 @@ python main.py
 ## **Project Structure**
 ```bash
 AutoCoder/
-├── main.py                 # Entry point for the project
-├── agents/                 # Folder for agent classes
-│   ├── __init__.py         # Makes this a Python package
-│   ├── base_agent.py       # Base agent class (shared logic)
-│   ├── debugger_agent.py   # Debugger-specific implementation
-│   ├── coder_agent.py      # Code-specific implementation
-├── models/                 # Folder for LLM's
-│   ├── starcoder/          # Folder for StarCoder model files
-├── memory/                 # Folder for memory system
-│   ├── __init__.py         # Makes this a Python package
-│   ├── multi_memory.py     # Multi-memory class implementation
-│   ├── persistence/        # Folder for persistent storage
-│       ├── __init__.py     # Package for persistent memory
-│       ├── code_memory.db  # SQLite database for persistent code memory
-├── tools/                  # Tools for debugging, testing, etc.
-│   ├── __init__.py         # Package for utility tools
-│   ├── code_runner.py      # Executes code snippets safely
-│   ├── error_parser.py     # Parses error messages
-│   ├── task_utils.py       # Helper functions for task management
-├── datasets/               # Folder for datasets (if training later)
-│   ├── errors_and_fixes.json  # Example dataset for debugging
-├── logs/                   # Folder for logs
-│   ├── debug.log           # Log file for debugging outputs
-├── tests/                  # Unit tests for everything
-│   ├── test_memory.py      # Tests for the memory system
-│   ├── test_agents.py      # Tests for the agents
-│   ├── test_tools.py       # Tests for utility tools
-├── _cred.py                # Holds important information you need o fill out, then rename to 'cred.py'
-├── requirements.txt        # Python dependencies
-├── README.md               # Project description
+├── .git/
+├── __pycache__/
+├── agents/
+│   ├── __pycache__/
+│   ├── __init__.py
+│   ├── base_agent.py
+│   ├── coder_agent.py
+│   └── debugger_agent.py
+├── datasets/
+│   └── errors_and_fixes.json
+├── logs/
+│   └── debug.log
+├── memory/
+│   ├── __pycache__/
+│   ├── persistence/
+│   │   ├── __init__.py
+│   │   └── code_memory.db
+│   ├── __init__.py
+│   └── multi_memory.py
+├── models/
+│   ├── some_model/
+│   └── starcoder/
+│       ├── .locks/
+│       │   └── models--bigcode--starcoder/
+│       └── models--bigcode--starcoder/
+│           ├── .no_exist/
+│           │   └── 827cd7721231872c152e3faef5cae1b22964ed58/
+│           │       ├── added_tokens.json
+│           │       └── model.safetensors
+│           ├── blobs/
+│           ├── refs/
+│           │   └── main
+│           └── snapshots/
+│               └── 827cd7721231872c152e3faef5cae1b22964ed58/
+│                   ├── config.json
+│                   ├── merges.txt
+│                   ├── model-00001-of-00007.safetensors
+│                   ├── model-00002-of-00007.safetensors
+│                   ├── model-00003-of-00007.safetensors
+│                   ├── model-00004-of-00007.safetensors
+│                   ├── model-00005-of-00007.safetensors
+│                   ├── model-00006-of-00007.safetensors
+│                   ├── model-00007-of-00007.safetensors
+│                   ├── model.safetensors.index.json
+│                   ├── special_tokens_map.json
+│                   ├── tokenizer.json
+│                   ├── tokenizer_config.json
+│                   └── vocab.json
+├── tests/
+│   ├── test_agents.py
+│   ├── test_memory.py
+│   └── test_tools.py
+├── tools/
+│   ├── __init__.py
+│   ├── code_runner.py
+│   ├── error_parser.py
+│   └── task_utils.py
+├── venv/
+├── .gitignore
+├── README.md
+├── _cred.py
+├── cred.py
+├── generate_structure.py
+├── main.py
+├── notes.md
+└── requirements.txt
 ```
 
 ---
