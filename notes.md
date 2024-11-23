@@ -38,38 +38,74 @@
 
 
 
-```bash
 AutoCoder/
-├── main.py
-├── agents/ 
+├── .git/
+├── __pycache__/
+├── agents/
+│   ├── __pycache__/
 │   ├── __init__.py
 │   ├── base_agent.py
-│   ├── debugger_agent.py
 │   ├── coder_agent.py
-├── models/
-│   ├── starcoder/
+│   └── debugger_agent.py
+├── datasets/
+│   └── errors_and_fixes.json
+├── logs/
+│   └── debug.log
 ├── memory/
-│   ├── __init__.py
-│   ├── multi_memory.py
+│   ├── __pycache__/
 │   ├── persistence/
-│       ├── __init__.py
-│       ├── code_memory.db
+│   │   ├── __init__.py
+│   │   └── code_memory.db
+│   ├── __init__.py
+│   └── multi_memory.py
+├── models/
+│   ├── some_model/
+│   └── starcoder/
+│       ├── .locks/
+│       │   └── models--bigcode--starcoder/
+│       └── models--bigcode--starcoder/
+│           ├── .no_exist/
+│           │   └── 827cd7721231872c152e3faef5cae1b22964ed58/
+│           │       ├── added_tokens.json
+│           │       └── model.safetensors
+│           ├── blobs/
+│           ├── refs/
+│           │   └── main
+│           └── snapshots/
+│               └── 827cd7721231872c152e3faef5cae1b22964ed58/
+│                   ├── config.json
+│                   ├── merges.txt
+│                   ├── model-00001-of-00007.safetensors
+│                   ├── model-00002-of-00007.safetensors
+│                   ├── model-00003-of-00007.safetensors
+│                   ├── model-00004-of-00007.safetensors
+│                   ├── model-00005-of-00007.safetensors
+│                   ├── model-00006-of-00007.safetensors
+│                   ├── model-00007-of-00007.safetensors
+│                   ├── model.safetensors.index.json
+│                   ├── special_tokens_map.json
+│                   ├── tokenizer.json
+│                   ├── tokenizer_config.json
+│                   └── vocab.json
+├── tests/
+│   ├── test_agents.py
+│   ├── test_memory.py
+│   └── test_tools.py
 ├── tools/
 │   ├── __init__.py
 │   ├── code_runner.py
 │   ├── error_parser.py
-│   ├── task_utils.py
-├── datasets/
-│   ├── errors_and_fixes.json
-├── logs/
-│   ├── debug.log 
-├── tests/
-│   ├── test_memory.py
-│   ├── test_agents.py
-│   ├── test_tools.py
-├── requirements.txt
+│   └── task_utils.py
+├── venv/
+├── .gitignore
 ├── README.md
-```
+├── _cred.py
+├── clear_cache.py
+├── cred.py
+├── generate_structure.py
+├── main.py
+├── notes.md
+└── requirements.txt
 
 
 

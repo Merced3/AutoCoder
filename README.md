@@ -120,6 +120,7 @@ AutoCoder/
 ├── .gitignore
 ├── README.md
 ├── _cred.py
+├── clear_cache.py
 ├── cred.py
 ├── generate_structure.py
 ├── main.py
