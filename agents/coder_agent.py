@@ -1,143 +1,197 @@
+from openai import OpenAI
 import os
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from transformers import logging
-import torch
-import sys
-import time
-import psutil
-from accelerate import init_empty_weights, infer_auto_device_map
+import json
+import requests
+from dotenv import load_dotenv
 
-# Configure transformers logging for detailed debug output
-logging.set_verbosity_debug()
+# Load environment variables from .env
+load_dotenv()
 
-# Add the root directory to the Python path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-from cred import ACCESS_TOKEN
+# Environment variables
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+ASSISTANT_ID = os.getenv("CODER_ASSISTANT_ID")
+DATASET_PATH = "./datasets"
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 class CoderAgent:
-    def __init__(self, model_path, model_cache_dir, access_token):
+    def __init__(self, assistant_id, dataset_path=DATASET_PATH):
         print("Initializing CoderAgent...")
-        self.model_path = model_path
-        self.model_cache_dir = model_cache_dir
-        self.access_token = access_token
-        self.tokenizer = None
-        self.model = None
-        print(f"Initialized with model_path: {self.model_path}, cache_dir: {self.model_cache_dir}")
+        self.assistant_id = assistant_id
+        self.dataset_path = dataset_path
+        self.files_folder = f"{dataset_path}/coder_files"
 
-    def download_model(self):
-        """Download the StarCoder model if not already present."""
-        print("Checking if model exists in cache directory...")
-        if not os.path.exists(self.model_cache_dir) or not os.listdir(self.model_cache_dir):
-            print(f"Model not found in {self.model_cache_dir}. Starting download...")
-            try:
-                print("Downloading tokenizer...")
-                self.tokenizer = AutoTokenizer.from_pretrained(
-                    self.model_path,
-                    cache_dir=self.model_cache_dir,
-                    use_auth_token=self.access_token
-                )
-                print("Tokenizer downloaded successfully!")
+        # Ensure folders exist
+        os.makedirs(self.files_folder, exist_ok=True)
+        print(f"Ensured file folder exists: {self.files_folder}")
 
-                print("Downloading model...")
-                self.model = AutoModelForCausalLM.from_pretrained(
-                    self.model_path,
-                    cache_dir=self.model_cache_dir,
-                    use_auth_token=self.access_token
-                )
-                print("Model downloaded successfully!")
-            except Exception as e:
-                print(f"Error downloading model: {e}")
-        else:
-            print(f"Model already exists in {self.model_cache_dir}. Skipping download.")
-            self.load_model()
-
-    def load_model(self):
-        """Load the model and tokenizer from the cache directory."""
+    def handle_required_action(self, thread_id, run_id, required_action):
         try:
-            print(f"Loading tokenizer from {self.model_cache_dir}...")
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_path, cache_dir=self.model_cache_dir)
-            print("Tokenizer loaded successfully!")
+            if required_action.type == "submit_tool_outputs":
+                # Get the tool call details
+                tool_call = required_action.submit_tool_outputs.tool_calls[0]
 
-            print(f"Loading model from {self.model_cache_dir}...")
-            with init_empty_weights():
-                print("Initializing empty weights for memory-efficient loading...")
-                model_config = AutoModelForCausalLM.from_pretrained(self.model_path, cache_dir=self.model_cache_dir)
-                print("Inferring device map...")
-                device_map = infer_auto_device_map(
-                    model_config, max_memory={"cpu": "32GB"}  # Force CPU usage
+                # Dynamically generate tool output
+                tool_output = {}
+                if tool_call.function.name == "get_code":
+                    tool_arguments = json.loads(tool_call.function.arguments)
+                    # Example output for `get_code`
+                    tool_output = {
+                        "success": "true",
+                        "code": f"# {tool_arguments['script_description']}\ndef fibonacci(): pass"
+                    }
+                else:
+                    print(f"Unknown tool function: {tool_call.function.name}")
+                    return None
+
+                # Convert tool_output to a JSON string
+                tool_output_json = json.dumps(tool_output)
+
+                # Submit the tool output
+                response = client.beta.threads.runs.submit_tool_outputs(
+                    thread_id=thread_id,
+                    run_id=run_id,
+                    tool_outputs=[
+                        {
+                            "tool_call_id": tool_call.id,
+                            "output": tool_output_json  # Pass as JSON string
+                        }
+                    ]
                 )
-                print(f"Device map: {device_map}")
-                self.model = AutoModelForCausalLM.from_pretrained(
-                    self.model_path,
-                    cache_dir=self.model_cache_dir,
-                    device_map=device_map,
-                    torch_dtype=torch.float32,  # Use float32 for compatibility
-                )
-            print("Model loaded successfully!")
+                print(f"Tool outputs submitted successfully!")
+                return response
+            else:
+                print("No submit_tool_outputs action required.")
         except Exception as e:
-            print(f"Error loading model: {e}")
+            print(f"Error handling required action: {e}")
+            return None
 
-    def test_model(self, prompt="Write a Python function to add two numbers."):
-        """Generate code to test the model."""
-        print("Starting test_model function...")
-        if self.model is None or self.tokenizer is None:
-            print("Model or tokenizer not loaded. Exiting test_model function.")
-            return
-
-        print(f"Prompt: {prompt}")
+    def create_thread(self, content):
         try:
-            print("Preparing input...")
-            inputs = self.tokenizer(prompt, return_tensors="pt").to("cpu")
-            print(f"Inputs prepared on device: {inputs}")
-            print(f"Attention mask: {inputs['attention_mask']}")
-
-            # Track memory usage before generation
-            memory_before = psutil.virtual_memory().used // (1024 ** 2)
-            print(f"Memory usage before generation: {memory_before} MB")
-
-            # Track start time
-            start_time = time.time()
-
-            print("Generating outputs...")
-            outputs = self.model.generate(
-                inputs.input_ids,
-                attention_mask=inputs.attention_mask,  # Explicit attention mask
-                max_length=100,
-                temperature=0.7,
-                do_sample=True,  # Enable sampling for varied results
-                pad_token_id=self.tokenizer.eos_token_id  # Explicit pad token
+            thread = client.beta.threads.create(
+                messages=[
+                    {
+                        "role": "user",
+                        "content": content
+                    }
+                ]
             )
-            end_time = time.time()
+            print(f"Thread created: {thread.id}")
 
-            # Track memory usage after generation
-            memory_after = psutil.virtual_memory().used // (1024 ** 2)
-            print(f"Memory usage after generation: {memory_after} MB")
+            # Submit the thread to the assistant, as a new run.
+            run = client.beta.threads.runs.create(thread_id=thread.id, assistant_id=self.assistant_id)
+            print(f"RUN Created: {run.id}")
 
-            # Calculate time taken
-            print(f"Time taken for generation: {end_time - start_time:.2f} seconds")
+            # Wait for run to complete
+            while run.status not in ["completed", "failed"]:
+                if run.status == "requires_action":
+                    print(f"Run requires action: {run.required_action.type}, Tool Calls: {len(run.required_action.submit_tool_outputs.tool_calls)}")
+                    action_result = self.handle_required_action(thread_id=thread.id, run_id=run.id, required_action=run.required_action)
+                    if not action_result:
+                        print("Action handling failed, aborting.")
+                        break
+                else:
+                    print(f"Run Status: {run.status}")
 
-            # Log the number of tokens generated
-            print(f"Number of tokens generated: {len(outputs[0])}")
+                # Refresh the run status
+                run = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
 
-            generated_code = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-            print("\nGenerated Code:")
-            print(generated_code)
+            if run.status == "completed":
+                print("Run Completed!")
+            else:
+                print("Run failed or could not be completed.")
+
+            return thread.id, run.id
         except Exception as e:
-            print(f"Error during code generation: {e}")
+            print(f"Failed to create thread: {e}")
+            return None  
+
+    def get_response(self, thread_id):
+        try:
+            message_response = client.beta.threads.messages.list(thread_id)
+            messages = message_response.data
+            latest_message = messages[0]
+
+            # Extract the raw content
+            raw_content = latest_message.content[0].text.value
+            print(f"\n Raw Content:\n{raw_content}\n")
+            
+            # Normalize and clean content
+            raw_content = raw_content.strip()  # Strip any leading/trailing spaces
+            if raw_content.startswith("```") and raw_content.endswith("```"):
+                print("Starts and ends with ```/``` - cleaning it.")
+                cleaned_content = raw_content[3:-3].strip()  # Remove outer backticks
+                if "\n" in cleaned_content:  # Check for a potential language identifier
+                    first_line, remaining_content = cleaned_content.split("\n", 1)
+                    if first_line.strip().isalpha():  # If the first line looks like a language hint
+                        cleaned_content = remaining_content.strip()  # Remove the language hint
+            else:
+                cleaned_content = raw_content  # No backticks, use as-is
+
+            # Print the cleaned response for verification
+            print(f"\nCleaned Response:\n{cleaned_content}")
+            return cleaned_content
+        except Exception as e:
+            print(f"\nError during message retrieval: {e}")
+            return None
+
+    def save_to_dataset(self, action, file_name, script_description, script_code):
+        print("Saving response to dataset...")
+        dataset_file = f"{self.dataset_path}/coder_dataset.json"
+
+        # Save the generated response to a file
+        try:
+            file_path = os.path.join(self.files_folder, file_name)
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+            with open(file_path, "w", encoding="utf-8") as code_file:
+                code_file.write(script_code)
+
+            print(f"Generated code saved to: {file_path}")
+
+            # Load or initialize the dataset
+            if os.path.exists(dataset_file):
+                with open(dataset_file, "r", encoding="utf-8") as file:
+                    try:
+                        dataset = json.load(file)
+                    except json.JSONDecodeError:
+                        print("Invalid JSON format in dataset. Reinitializing...")
+                        dataset = []
+            else:
+                dataset = []
+
+            # Add metadata about the generated file
+            new_entry = {
+                "task": action,
+                "file_name": file_name,
+                "prompt": script_description,
+                "output_path": file_path
+            }
+            dataset.append(new_entry)
+
+            # Save updated metadata back to the dataset file
+            with open(dataset_file, "w", encoding="utf-8") as file:
+                json.dump(dataset, file, indent=4, ensure_ascii=False)
+
+            print("Response metadata saved successfully.")
+        except Exception as e:
+            print(f"Error saving to dataset: {e}")
+
 
 if __name__ == "__main__":
-    print("Starting main program...")
-    model_path = "bigcode/starcoder"
-    model_cache_dir = "./models/starcoder"
+    # Validate API Key and Assistant ID
+    if not OPENAI_API_KEY or not ASSISTANT_ID:
+        raise ValueError("Missing API key or assistant ID in environment variables. Check .env file.")
 
-    access_token = ACCESS_TOKEN
+    # Create an instance of the agent
+    coder_agent = CoderAgent(assistant_id=ASSISTANT_ID)
 
-    print("Creating CoderAgent instance...")
-    coder_agent = CoderAgent(model_path=model_path, model_cache_dir=model_cache_dir, access_token=access_token)
+    action = "create"
+    file_name = "calculator.py"
+    script_description = "A Python script that performs basic arithmetic operations (addition, subtraction, multiplication, division)."
+    content = f"{action}, {file_name}, {script_description}"
 
-    print("Checking or downloading model...")
-    coder_agent.download_model()
-
-    print("Testing the model...")
-    coder_agent.test_model()
+    thread_id, run_id = coder_agent.create_thread(content)
+    if thread_id and run_id:
+        code = coder_agent.get_response(thread_id)
+        if code:
+            coder_agent.save_to_dataset(action, file_name, script_description, code)
